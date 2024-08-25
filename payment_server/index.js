@@ -10,6 +10,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import { postReq } from './controllers/ccavRequestHandler.js';
 import { postRes } from './controllers/ccavResponseHandler.js';
+import { Redirect } from './controllers/Redirect.js';
 
 dotenv.config();
 
@@ -21,25 +22,32 @@ const SOCKET_PORT = 1338;
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }));
 
-const allowedOrigins = ['http://localhost:3000', 'http://13.127.29.180'];
+const allowedOrigins = ['http://localhost:3000', 'http://13.127.29.180', 'http://13.127.29.180:4000', 'http://payment.accwizz.com'];
 
 // Configure CORS
+// app.use(cors({
+//     origin: (origin, callback) => {
+//         if (allowedOrigins.includes(origin) || !origin) {
+//             callback(null, true);
+//         } else {
+//             callback(new Error('Not allowed by CORS'));
+//         }
+//     },
+//     credentials: true
+// }));
+
 app.use(cors({
-    origin: (origin, callback) => {
-        if (allowedOrigins.includes(origin) || !origin) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true
+    origin: '*',
 }));
+
 
 // Use the router for API routes
 app.use(approuter);
 
 // Endpoint for CCAV request handler
 app.post("/ccavRequestHandler", postReq);
+
+app.post("/RedirectHandler", Redirect );
 
 // Endpoint for CCAV response handler
 app.post('/ccavResponseHandler', (req, res) => {

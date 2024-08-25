@@ -3,6 +3,9 @@
 import crypto from 'crypto';
 
 export function encrypt(plainText, workingKey) {
+    console.log(plainText);
+    console.log(workingKey);
+    
     const m = crypto.createHash('md5');
     m.update(workingKey);
     const key = m.digest();
@@ -23,3 +26,4 @@ export function decrypt(encText, workingKey) {
     decoded += decipher.final('utf8');
     return decoded;
 }
+

@@ -5,11 +5,21 @@ import { encryptData, decryptData } from './Functions/Data_protection';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPen, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { useLocation } from 'react-router-dom';
+import { apiUrl, secretKey } from './constant';
 
-const secretKey = process.env.REACT_APP_SECRETKEY;
-const apiUrl = process.env.REACT_APP_SERVERAPI;
+
 
 const Form = () => {
+    const location = useLocation();
+
+    // Create URLSearchParams from location.search
+    const params = new URLSearchParams(location.search);
+
+    // Get specific parameters
+    const billguid = params.get('billguid');
+
+
+
     const [billdata, setBilldata] = useState({});
     const [sharedetailsclicked, setSharedetailsclicked] = useState(false);
     const [paymentmode, setPaymentmode] = useState("");
@@ -30,20 +40,14 @@ const Form = () => {
     const [currency, setCurrency] = useState("INR");
     const [amount, setAmount] = useState("");
     const [redirect_url, setRedirect_url] = useState(`${apiUrl}ccavResponseHandler`);
-    const [cancel_url, setCancel_url] = useState(`${apiUrl}ccavResponseHandler`);
+    const [cancel_url, setCancel_url] = useState(`${apiUrl}RedirectHandler`);
     const [language, setLanguage] = useState("EN");
 
 
 
 
 
-    const location = useLocation();
 
-    // Create URLSearchParams from location.search
-    const params = new URLSearchParams(location.search);
-
-    // Get specific parameters
-    const billguid = params.get('billguid');
 
 
 
@@ -53,7 +57,7 @@ const Form = () => {
             console.log(encryptedbillguid);
 
             if (encryptedbillguid) {
-                const response = await axios.get(`http://localhost:4000/getbilldetails`, {
+                const response = await axios.get(`${apiUrl}getbilldetails`, {
                     params: { billguid: encryptedbillguid }
                 });
                 const decryptedResponse = decryptData(response.data.payload, secretKey);
@@ -156,14 +160,16 @@ const Form = () => {
         e.preventDefault();
 
         const payload = {
-            merchantid: merchantid,
+            merchant_id: merchantid,
             order_id: order_id,
             currency: currency,
             redirect_url: redirect_url,
             cancel_url: cancel_url,
             billing_name: name,
             amount: amount,
-            merchant_param1: remarks
+            language: language,
+            merchant_param1: remarks,
+            merchant_param2: billguid,
         };
 
         try {
@@ -185,8 +191,8 @@ const Form = () => {
         e.preventDefault(); // Prevent the default form submission behavior
 
         console.log(file);
-        
-    
+
+
         try {
             // Create payload object
             const payload = {
@@ -205,41 +211,41 @@ const Form = () => {
                 amountpaid: amount,
                 comments: comments
             };
-    
+
             // Encrypt the payload
             const encrytedpayload = encryptData(payload, secretKey);
-    
+
 
 
             // Check if file is provided
             if (!file || file.length === 0) {
                 throw new Error('No file provided');
             }
-    
+
             // Convert the file to a Blob
             const fileBlob = new Blob([file], { type: file.type });
-    
+
             // Create FormData object and append data
             const formData = new FormData();
             formData.append('data', encrytedpayload);
             formData.append('file', fileBlob, file.name);
-    
+
             // Send POST request
             const response = await axios.post(`${apiUrl}addvoucher`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
-    
+
             // Decrypt the response data
             const decryptedResponse = decryptData(response.data.data, secretKey);
             console.log(decryptedResponse);
-    
+
         } catch (error) {
             console.error('Error in detailsbtnclicked:', error);
         }
     }
-    
+
 
 
 

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Response</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            display: grid;
+            place-items: center;
+        }
+        .icon-container {
+            margin-top: -10vh;
+            width: 10vw;
+            height: 10vw;
+            border-radius: 50%;
+            margin-bottom: 30px;
+            display: grid;
+            place-items: center;
+            box-shadow: 3px 2px 1px gray;
+        }
+        .icon {
+            width: 8vw;
+            height: 8vw;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+        }
+        .success {
+            background-color: #26bb26;
+        }
+        .fail {
+            background-color: rgb(245, 33, 33);
+        }
+        .amount {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .message {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .sub-message {
+            font-size: 16px;
+            color: #777;
+            margin-bottom: 20px;
+        }
+        .order-id {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+        .try-again-button {
+            background-color: rgb(245, 33, 33);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .try-again-button:hover {
+            background-color: #006400;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="success-container" class="container hidden">
+        <div class="icon-container">
+            <div class="icon success">
+                <i class="fas fa-check" style="font-size:60px;color:#fff;"></i>
+            </div>
+        </div>
+        <div id="amount-success" class="amount">₹1,18,355</div>
+        <div class="message">Payment Successful!</div>
+        <div id="order-id-success" class="order-id">Order ID: NA, </div>
+        <p>You Can Close the Window</p>
+        <p id="redirect-timer">Redirecting to AccWizz Website in 15 seconds...</p>
+    </div>
+
+    <div id="fail-container" class="container hidden">
+        <div class="icon-container">
+            <div class="icon fail">
+                <i class="fas fa-times" style="font-size:60px;color:#fff;"></i>
+            </div>
+        </div>
+        <div id="amount-fail" class="amount">₹1,18,355</div>
+        <div class="message">Payment Failed!</div>
+        <div class="sub-message">
+            Hey, seems like there was some trouble.<br>We are there with you. Just hold back.
+        </div>
+        <div id="order-id-fail" class="order-id">Order ID: NA, </div>
+        <a id="try-again-link" href="#">
+            <button class="try-again-button">TRY AGAIN</button>
+        </a>
+    </div>
+
+    <script>
+        function getQueryParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ccavResponse = urlParams.get('ccavResponse');
+            const params = new URLSearchParams(ccavResponse);
+            return {
+                amount: params.get('amount'),
+                order_id: params.get('order_id'),
+                trans_date: params.get('trans_date'),
+                billguid: params.get('merchant_param2'),
+                order_status: params.get('order_status')
+            };
+        }
+
+        window.onload = function() {
+            const { amount, order_id, trans_date, billguid, order_status } = getQueryParams();
+
+            if (order_status === "Success") {
+                document.getElementById('success-container').classList.remove('hidden');
+                document.getElementById('amount-success').textContent = `₹${amount}`;
+                document.getElementById('order-id-success').textContent = `Order ID: ${order_id}, ${trans_date}`;
+
+                // Countdown and external redirect
+                let countdown = 15;
+                const timerElement = document.getElementById('redirect-timer');
+                const intervalId = setInterval(() => {
+                    countdown--;
+                    timerElement.textContent = `Redirecting to AccWizz Website in ${countdown} seconds...`;
+                    if (countdown === 0) {
+                        window.location.href = 'https://accwizz.com'; // External redirect
+                        clearInterval(intervalId); // Clear interval
+                    }
+                }, 1000);
+            } else if (order_status === "Failure") {
+                document.getElementById('fail-container').classList.remove('hidden');
+                document.getElementById('amount-fail').textContent = `₹${amount}`;
+                document.getElementById('order-id-fail').textContent = `Order ID: ${order_id}, ${trans_date}`;
+                document.getElementById('try-again-link').href = `http://payment.accwizz.com?billguid=${billguid}`;
+            }
+        }
+    </script>
+</body>
+</html>
