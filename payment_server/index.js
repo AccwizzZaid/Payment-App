@@ -12,6 +12,8 @@ import { postReq } from './controllers/ccavRequestHandler.js';
 import { postRes } from './controllers/ccavResponseHandler.js';
 import { Redirect } from './controllers/Redirect.js';
 
+import { SaveTransaction } from './controllers/Transaction_Controller.js';
+
 dotenv.config();
 
 const app = express();
@@ -53,6 +55,8 @@ app.post("/RedirectHandler", Redirect );
 app.post('/ccavResponseHandler', (req, res) => {
     postRes(req, res);
 });
+
+app.post('/savetransaction', SaveTransaction);
 
 // // Get the directory name for serving static files
 // const __filename = fileURLToPath(import.meta.url);

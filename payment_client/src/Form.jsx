@@ -12,12 +12,12 @@ import { apiUrl, secretKey } from './constant';
 const Form = () => {
     const location = useLocation();
 
+
     // Create URLSearchParams from location.search
     const params = new URLSearchParams(location.search);
 
     // Get specific parameters
     const billguid = params.get('billguid');
-
 
 
     const [billdata, setBilldata] = useState({});
@@ -36,7 +36,6 @@ const Form = () => {
 
 
     const [merchantid, setMercahntid] = useState(3722062);
-    const [order_id, setPrder_id] = useState(1234);
     const [currency, setCurrency] = useState("INR");
     const [amount, setAmount] = useState("");
     const [redirect_url, setRedirect_url] = useState(`${apiUrl}ccavResponseHandler`);
@@ -44,10 +43,13 @@ const Form = () => {
     const [language, setLanguage] = useState("EN");
 
 
+    const generateTransactionID = () => {
+        const timestamp = Date.now().toString(); // current timestamp in milliseconds
+        const randomNumbers = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit random number
+        return `${timestamp}${randomNumbers}`;
 
 
-
-
+    }
 
 
 
@@ -156,8 +158,70 @@ const Form = () => {
 
     };
 
-    const paymentbtnclicked = async (e) => {
+    function formatDate(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    }
+
+    function getTransactionTime() {
+        // Generate the current date and time
+        const transactionDate = new Date();
+
+        // Get the time components
+        const seconds = transactionDate.getSeconds();
+        const minutes = transactionDate.getMinutes();
+        const hours = transactionDate.getHours();
+
+        // Format the transaction date and time
+        const formattedTime = `${hours}h ${minutes}m ${seconds}s`;
+
+        return formattedTime;
+    }
+
+    const savetransactiondetails = async (order_id) => {
+        try {
+            const response = await axios.post(`${apiUrl}savetransaction`, {
+                transactionid: order_id,
+                gatewaytransactionid: null,
+                merchantid: merchantid,
+                amount: amount,
+                transactiondate: formatDate(new Date()),
+                transactiontime: getTransactionTime(),
+                billguid: billguid,
+                name: name,
+                flatshopno: billdata.flatshopno,
+                inputlog: {
+                    transactionid: order_id,
+                    gatewaytransactionid: null,
+                    merchantid: merchantid,
+                    amount: amount,
+                    transactiondate: formatDate(new Date()),
+                    transactiontime: getTransactionTime(),
+                    billguid: billguid,
+                    name: name,
+                    flatshopno: billdata.flatshopno,
+                },
+                outputlog: {},
+                transaction_status: null
+
+            });
+        } catch (error) {
+            console.log(error);
+        }
+
+
+    }
+
+
+    const initiatePayment = async (e) => {
+
         e.preventDefault();
+
+        const order_id = generateTransactionID();
+
+        await savetransactiondetails(order_id);
 
         const payload = {
             merchant_id: merchantid,
@@ -172,6 +236,9 @@ const Form = () => {
             merchant_param2: billguid,
         };
 
+        console.log(payload);
+
+
         try {
             const response = await axios.post(`${apiUrl}ccavRequestHandler`, payload, { responseType: 'blob' });
             const blob = new Blob([response.data], { type: 'text/html' });
@@ -183,7 +250,6 @@ const Form = () => {
             console.log(error);
         }
 
-        console.log(payload);
     };
 
 
@@ -267,7 +333,7 @@ const Form = () => {
                                 <span>Flat / Shop No :</span>
                                 <span>Payment Towards :</span>
                                 <span>Bill Amount :</span>
-                                <span>View Detailed Bill :</span>
+                                <span style={{ display: 'none' }}>View Detailed Bill :</span>
                             </div>
                             <div className="right">
                                 <span>{name}</span>
@@ -283,12 +349,12 @@ const Form = () => {
                                     />
                                     <FontAwesomeIcon icon={faPen} className="icon" />
                                 </InputContainer>
-                                <button id='download-btn'>Download</button>
+                                <button style={{ display: 'none' }}id='download-btn'>Download</button>
                             </div>
                         </div>
                         <div>
-                            <input type="checkbox" onChange={(e) => setSharedetailsclicked(e.target.checked)} />
-                            <span> Share Payment Details</span>
+                            <input style={{display : 'none'}} type="checkbox" onChange={(e) => setSharedetailsclicked(e.target.checked)} />
+                            <span style={{display : 'none'}}> Share Payment Details</span>
                         </div>
                         {
                             sharedetailsclicked && (
@@ -352,7 +418,7 @@ const Form = () => {
                                     <form style={{ display: 'flex', flexDirection: 'column', gap: '2vh' }}>
                                         <label >Remarks*</label>
                                         <input type="text" required style={{ border: "none", outline: "none", borderBottom: "1px solid black" }} onChange={(e) => setRemarks(e.target.value)} />
-                                        <button id='pay-btn' onClick={paymentbtnclicked}>Pay Now</button>
+                                        <button id='pay-btn' onClick={(e) => { initiatePayment(e); }}>Pay Now</button>
                                     </form>
                                 </div>
                             )
